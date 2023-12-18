@@ -1,0 +1,7 @@
+# spark-submit --master local --conf spark.pyspark.python="C:\Users\Ramvilas\AppData\Local\Programs\Python\Python310\python.exe" test.py
+# spark-submit --master local --conf spark.pyspark.python="%PYSPARK_HOME%" test.py
+
+# spark.pyspark.python "D:\\Python2.7\\python.exe"
+# spark.pyspark.driver.python "D:\\Python2.7\\python.exe"
+
+#spark-submit --master local[2] .\test.py
