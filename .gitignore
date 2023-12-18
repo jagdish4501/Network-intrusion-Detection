@@ -1,7 +1,7 @@
 /Data Set/
 /test_code/
 
-
+/kafka_spark/data_for_kafka_suffled.csv
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
