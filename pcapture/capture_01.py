@@ -1,7 +1,6 @@
 import pyshark
 import socket
 import csv
-import pandas as pd
 from collections import defaultdict
 from datetime import datetime
 
@@ -18,46 +17,36 @@ def get_local_ip():
         
 def calculate_features(packets):
     local_ip = get_local_ip()
-    print(local_ip)
     features = {}
     total_fwd_packets = 0
     total_fwd_packet_length = 0
     total_bwd_packets = 0
     total_bwd_packet_length = 0
-    min_packet_length = float('inf')
+    min_packet_length = float(100000000)
     max_fwd_packet_length = 0
-    min_fwd_packet_length = float('inf')
+    min_fwd_packet_length = float(100000)
     max_bwd_packet_length = 0
-    min_bwd_packet_length = float('inf')
+    min_bwd_packet_length = float(100000)
     flow_iat = []
-    bwd_iat = []
-    
+    bwd_iat = []    
     fwd_psh_flags = 0
     bwd_psh_flags = 0
     fwd_urg_flags = 0
-    bwd_urg_flags = 0
-    
+    bwd_urg_flags = 0    
     fwd_hdr_len = 0
-    bwd_hdr_len = 0
-    
-    bwd_packet = 0
-    
+    bwd_hdr_len = 0    
+    bwd_packet = 0    
     fin_flag_count = 0
     rst_flag_count = 0
     psh_flag_count = 0
     ack_flag_count = 0
-    urg_flag_count = 0
-    
+    urg_flag_count = 0    
     init_win_bytes_fwd = 0
-    init_win_bytes_bwd = 0
-    
-    flow_duration = 0
-    
+    init_win_bytes_bwd = 0    
+    flow_duration = 0    
     last_packet_time = None 
-    first_packet_time = None 
-     
-    prev_time = None
-    
+    first_packet_time = None     
+    prev_time = None    
     for packet in packets:
          
         packet_time = packet.sniff_time 
@@ -65,16 +54,11 @@ def calculate_features(packets):
             packet_time = packet.sniff_time 
             # Update first packet time if not set yet
          
-            if first_packet_time is None:
-               
+            if first_packet_time is None:       
                 first_packet_time = packet_time
-
             # Update last packet time
-            last_packet_time = packet_time
-            
-            # Update flow inter-arrival times
-            
-            
+            last_packet_time = packet_time    
+            # Update flow inter-arrival times             
             if prev_time is not None:
                 time_diff = abs(packet_time - prev_time)
                 flow_iat.append(time_diff.total_seconds())
@@ -94,9 +78,7 @@ def calculate_features(packets):
             elif 'IPv6' in packet:
                 source_ip = packet.ipv6.src
                 dest_ip = packet.ipv6.dst
-                
-            # print(f"src ip: {source_ip} , dst_ip: {dest_ip}")
-            
+                            
             if source_ip == local_ip[0] or source_ip == local_ip[1]:
                 # Update packet length
                 
@@ -159,9 +141,7 @@ def calculate_features(packets):
                 bwd_psh_flags += 1 if packet.tcp.flags_push == 'True' else 0
                 bwd_urg_flags += 1 if packet.tcp.flags_urg == 'True' else 0 
                 bwd_packet += 1
-                # print("prev_time:",prev_time)
                 if prev_time is not None:
-                #    print("inside if")
                    diff = abs(packet_time - prev_time)
                    bwd_iat.append(diff.total_seconds())
                 prev_time = packet_time   
@@ -198,13 +178,11 @@ def calculate_features(packets):
 
     # Calculate Flow Duration
     if first_packet_time is not None and last_packet_time is not None:
-        flow_duration = (last_packet_time - first_packet_time).total_seconds() 
-        # print(f"flow duration == {flow_duration}")
+        flow_duration = (last_packet_time - first_packet_time).total_seconds()
     else:
         flow_duration = 0
 
     # Calculate Bwd IAT Total  
-    # print("the array is :" , bwd_iat)
     bwd_iat_total = sum(bwd_iat)
 
     # Calculate Bwd IAT Mean
@@ -221,23 +199,16 @@ def calculate_features(packets):
 
     # Calculate Down/Up Ratio
     down_up_ratio = total_fwd_packets / total_bwd_packets if total_bwd_packets != 0 else 0
-    
- 
-    # print(f"first: {first_packet_time} , last: {last_packet_time} , prev: {prev_time} , flow: {flow_duration}")
   
     # Fill the features dictionary
     features['Flow Duration'] = flow_duration
     features['Total Fwd Packets'] = total_fwd_packets
-    features['Total Bwd Packets'] = total_bwd_packets
+    # features['Total Bwd Packets'] = total_bwd_packets
     features['Total Length of Fwd Packets'] = total_fwd_packet_length
     features['Fwd Packet Length Max'] = max_fwd_packet_length
     features['Fwd Packet Length Min'] = min_fwd_packet_length
     features['Bwd Packet Length Max'] = max_bwd_packet_length
     features['Bwd Packet Length Min'] = min_bwd_packet_length
-    features['Fwd PSH Flags'] = fwd_psh_flags
-    features['Bwd PSH Flags'] = bwd_psh_flags
-    features['Fwd URG Flags'] = fwd_urg_flags
-    features['Bwd URG Flags'] = bwd_urg_flags
     features['Flow Bytes/s'] = flow_bytes_per_sec
     features['Flow Packets/s'] = flow_packets_per_sec
     features['Flow IAT Mean'] = sum(flow_iat) / len(flow_iat) if flow_iat else 0
@@ -247,9 +218,13 @@ def calculate_features(packets):
     features['Bwd IAT Mean'] = bwd_iat_mean
     features['Bwd IAT Std'] = bwd_iat_std
     features['Bwd IAT Max'] = max(bwd_iat) if bwd_iat else 0
+    # features['Bwd IAT Min'] = min(bwd_iat) if bwd_iat else 0
+    features['Fwd PSH Flags'] = fwd_psh_flags
+    features['Bwd PSH Flags'] = bwd_psh_flags
+    features['Fwd URG Flags'] = fwd_urg_flags
+    features['Bwd URG Flags'] = bwd_urg_flags
     features['Fwd Header Length'] = fwd_hdr_len
     features['Bwd Header Length'] = bwd_hdr_len
-    features['Bwd IAT Min'] = min(bwd_iat) if bwd_iat else 0
     features['Bwd Packets/s'] = bwd_packet/flow_duration if flow_duration != 0 else 0
     features['Min Packet Length'] = min_packet_length
     features['FIN Flag Count'] = fin_flag_count
@@ -258,33 +233,34 @@ def calculate_features(packets):
     features['ACK Flag Count'] = ack_flag_count
     features['URG Flag Count'] = urg_flag_count
     features['Down/Up Ratio'] = down_up_ratio 
-    # features['']
-    # features['']
-    # features['']
-    # features['']
-    # features['']
-    # features['']
+    features['Fwd Avg Bytes/Bulk']=0
+    features['Fwd Avg Packets/Bulk']=0
+    features['Fwd Avg Bulk Rate']=0
+    features['Bwd Avg Bytes/Bulk']=0
+    features['Bwd Avg Packets/Bulk']=0
+    features['Bwd Avg Bulk Rate']=0
     features['Init_win_bytes_forward'] = init_win_bytes_bwd
     features['Init_win_bytes_backward'] = init_win_bytes_bwd
-    # features['']
-    # features['']
-    # features['']
-    # features['']
-    
-    # Add more features here...
+    features['Active Std']=0
+    features['Active Mean']=0
+    features['Active Max']=0
+    features['Idle Std']=0
 
     return features
 
-def sniff_packets(interface, duration=100):
+def sniff_packets(interface, duration=10):
     # Dictionary to store features for each destination port
     port_features = defaultdict(list)
+
     # Start capturing packets
     capture = pyshark.LiveCapture(interface=interface)
+
     start_time = datetime.now()
-    for packet in capture.sniff_continuously(): 
+    for packet in capture.sniff_continuously():  # Capture 100 packets at a time
         if 'TCP' in packet:
             dst_port = packet.tcp.dstport
             port_features[dst_port].append(packet)
+
         # Break the loop if duration exceeds
         if (datetime.now() - start_time).total_seconds() >= duration:
             break
@@ -305,13 +281,12 @@ def write_to_csv(filename, port_features):
 
 if __name__ == "__main__":
     # Set the network interface to capture packets from
-    interface = "Ethernet"  # Change this to your network interface name
-
+    interface = "Wi-Fi"  # Change this to your network interface name
     # Capture packets and extract features
-    port_features = sniff_packets(interface)
+    while True:
+        port_features = sniff_packets(interface)
+        # Write extracted features to a CSV file
+        csv_filename = "packet_features.csv"
+        write_to_csv(csv_filename, port_features)
 
-    # Write extracted features to a CSV file
-    csv_filename = "packet_features.csv"
-    write_to_csv(csv_filename, port_features)
-
-    print(f"Features extracted and saved to {csv_filename}")
+        

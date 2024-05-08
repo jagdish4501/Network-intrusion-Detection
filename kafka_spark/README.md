@@ -1,2 +1,0 @@
-hello moto
-adsakj

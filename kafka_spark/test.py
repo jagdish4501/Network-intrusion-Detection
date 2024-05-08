@@ -1,14 +1,14 @@
 import pandas as pd
+import time
 
-# Assuming df is your DataFrame
-df = pd.DataFrame({
-    'A': [1, 2, 3],
-    'B': [4, 5, 6],
-    'C': [7, 8, 9]
-})
 
-# Convert DataFrame to NumPy array
-array_data = df.values
+PATH='../pcapture/packet_features.csv'
 
-# Print the resulting array
-print(array_data)
+while True:
+    try:
+        df=pd.read_csv(PATH)
+        print(df)
+        time.sleep(10)
+    except:
+        print('some thing went wrong')
+        time.sleep(5)
